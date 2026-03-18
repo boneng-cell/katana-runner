@@ -1,0 +1,43 @@
+name: Katana Scan (Simple)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Target URL atau domain"
+        required: true
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.9'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      - name: Install Katana
+        run: go install github.com/projectdiscovery/katana/cmd/katana@v1.0.4
+
+      - name: Run Katana
+        env:
+          TARGET: ${{ github.event.inputs.target }}
+          USE_HEADERS: "false"
+        run: python3 katana-runner.py
+
+      - name: Upload Result
+        uses: actions/upload-artifact@v4
+        with:
+          name: katana-result
+          path: "*.txt"
