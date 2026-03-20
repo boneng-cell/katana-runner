@@ -65,7 +65,7 @@ def run_katana():
             "-s", "breadth-first",
             "-o", katana_file
         ])
-        subprocess.run(cmd, check=True, timeout=300)  # timeout 5 menit
+        subprocess.run(cmd, check=True, timeout=300)
         print(f"[INFO] Katana selesai")
         return True
     except Exception as e:
@@ -169,7 +169,29 @@ for fname in all_results:
         except:
             pass
 
-unique_lines = sorted(set(line.strip() for line in all_lines if line.strip()))
+static_extensions = (
+    '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.webp', '.ico', '.tiff', '.psd',
+    '.css', '.scss', '.sass', '.less',
+    '.js', '.jsx', '.ts', '.tsx', '.vue',
+    '.woff', '.woff2', '.ttf', '.eot', '.otf',
+    '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+    '.zip', '.tar', '.gz', '.rar', '.7z',
+    '.mp4', '.mp3', '.avi', '.mov', '.wmv', '.flv', '.mkv',
+    '.xml', '.json', '.yaml', '.yml', '.toml', '.ini', '.cfg',
+    '.txt', '.md', '.log'
+)
+
+filtered_lines = []
+for line in all_lines:
+    line_stripped = line.strip()
+    if line_stripped:
+        if any(line_stripped.lower().endswith(ext) for ext in static_extensions):
+            continue
+        if any(f"/{ext.lstrip('.')}/" in line_stripped.lower() for ext in static_extensions[:10]):  # sample a few
+            continue
+        filtered_lines.append(line_stripped)
+
+unique_lines = sorted(set(filtered_lines))
 
 with open(output, "w") as f:
     for line in unique_lines:
@@ -184,5 +206,5 @@ if os.path.exists(gospider_dir):
     import shutil
     shutil.rmtree(gospider_dir)
 
-print(f"[INFO] Output final (deduplicated) saved to: {output}")
+print(f"[INFO] Output final (deduplicated, filtered) saved to: {output}")
 print(f"[INFO] Total unique URLs: {len(unique_lines)}")
