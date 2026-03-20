@@ -34,7 +34,7 @@ jobs:
         env:
           TARGET: ${{ github.event.inputs.target }}
           USE_HEADERS: "false"
-        run: python3 katana-runner.py
+        run: python3 crawl-runner.py
 
       - name: Upload Result
         uses: actions/upload-artifact@v4
