@@ -112,7 +112,7 @@ def run_gospider():
 def run_hakrawler():
     try:
         print(f"[INFO] Menjalankan Hakrawler...")
-        cmd = ["hakrawler", "-url", target, "-depth", "5", "-wayback"]
+        cmd = ["hakrawler", "-u", target, "-d", "5", "-wayback"]
         with open(hakrawler_file, "w") as f:
             subprocess.run(cmd, stdout=f, check=True, timeout=300)
         print(f"[INFO] Hakrawler selesai")
@@ -124,7 +124,7 @@ def run_hakrawler():
 def run_waymore():
     try:
         print(f"[INFO] Menjalankan Waymore...")
-        cmd = ["waymore", "-i", target, "-mode", "U", "-o", waymore_file]
+        cmd = ["waymore", "-i", target, "-mode", "U", "-oU", waymore_file]
         subprocess.run(cmd, check=True, timeout=300)
         print(f"[INFO] Waymore selesai")
         return True
@@ -135,7 +135,7 @@ def run_waymore():
 def run_urlfinder():
     try:
         print(f"[INFO] Menjalankan Urlfinder...")
-        cmd = ["urlfinder", "-u", target, "-o", urlfinder_file]
+        cmd = ["urlfinder", "-d", target, "-o", urlfinder_file]
         subprocess.run(cmd, check=True, timeout=300)
         print(f"[INFO] Urlfinder selesai")
         return True
