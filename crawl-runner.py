@@ -4,30 +4,22 @@ import sys
 import glob
 from urllib.parse import urlparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
 target = os.getenv("TARGET", "").strip()
 cookie = os.getenv("COOKIE", "").strip()
 use_headers = os.getenv("USE_HEADERS", "false").lower() == "true"
-
 if not target:
     print("ERROR: TARGET tidak boleh kosong")
     sys.exit(1)
-
 if not target.startswith("http://") and not target.startswith("https://"):
     target = "https://" + target
-
 parsed = urlparse(target)
 if not parsed.hostname:
     print("ERROR: URL tidak valid")
     sys.exit(1)
-
 domain = parsed.hostname
 if parsed.port:
     domain = f"{domain}_{parsed.port}"
-
-active_output = f"{domain}_active.txt"
-passive_output = f"{domain}_passive.txt"
-
+output_file = f"{domain}.txt"
 headers = []
 if use_headers:
     headers.extend([
@@ -35,20 +27,16 @@ if use_headers:
         "Accept-Language: en-US,en;q=0.9",
         "Referer: https://google.com"
     ])
-
 if cookie:
     headers.append(f"Cookie: {cookie}")
-
 go_bin = os.path.expanduser("~/go/bin")
 os.environ["PATH"] += os.pathsep + go_bin
-
 katana_file = f"{domain}_katana.txt"
 gospider_file = f"{domain}_gospider.txt"
 hakrawler_file = f"{domain}_hakrawler.txt"
 waymore_file = f"{domain}_waymore.txt"
 urlfinder_file = f"{domain}_urlfinder.txt"
 gospider_dir = f"gospider_{domain}"
-
 def run_katana():
     try:
         print(f"[INFO] Menjalankan Katana...")
@@ -75,7 +63,6 @@ def run_katana():
     except Exception as e:
         print(f"[WARNING] Katana gagal: {e}")
         return False
-
 def run_gospider():
     try:
         print(f"[INFO] Menjalankan Gospider...")
@@ -108,7 +95,6 @@ def run_gospider():
     except Exception as e:
         print(f"[WARNING] Gospider gagal: {e}")
         return False
-
 def run_hakrawler():
     try:
         print(f"[INFO] Menjalankan Hakrawler...")
@@ -120,7 +106,6 @@ def run_hakrawler():
     except Exception as e:
         print(f"[WARNING] Hakrawler gagal: {e}")
         return False
-
 def run_waymore():
     try:
         print(f"[INFO] Menjalankan Waymore...")
@@ -131,7 +116,6 @@ def run_waymore():
     except Exception as e:
         print(f"[WARNING] Waymore gagal: {e}")
         return False
-
 def run_urlfinder():
     try:
         print(f"[INFO] Menjalankan Urlfinder...")
@@ -142,51 +126,36 @@ def run_urlfinder():
     except Exception as e:
         print(f"[WARNING] Urlfinder gagal: {e}")
         return False
-
 print("[INFO] Starting crawling...")
-
-active_results = []
-passive_results = []
-
-if cookie:
-    print("[INFO] Cookie detected → hanya menjalankan Katana")
-    success = run_katana()
-    if success and os.path.exists(katana_file):
-        active_results = [katana_file]
-    else:
-        print("[ERROR] Katana gagal menjalankan tugas")
-        sys.exit(1)
-else:
-    print("[INFO] No cookie → menjalankan semua crawler paralel")
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        futures = {
-            executor.submit(run_katana): "katana",
-            executor.submit(run_gospider): "gospider",
-            executor.submit(run_hakrawler): "hakrawler",
-            executor.submit(run_waymore): "waymore",
-            executor.submit(run_urlfinder): "urlfinder"
-        }
-        for future in as_completed(futures):
-            name = futures[future]
-            try:
-                result = future.result()
-                if result:
-                    print(f"[INFO] {name} berhasil")
-                    if name == "katana" and os.path.exists(katana_file):
-                        active_results.append(katana_file)
-                    elif name == "gospider" and os.path.exists(gospider_file):
-                        active_results.append(gospider_file)
-                    elif name == "hakrawler" and os.path.exists(hakrawler_file):
-                        active_results.append(hakrawler_file)
-                    elif name == "waymore" and os.path.exists(waymore_file):
-                        passive_results.append(waymore_file)
-                    elif name == "urlfinder" and os.path.exists(urlfinder_file):
-                        passive_results.append(urlfinder_file)
-                else:
-                    print(f"[WARNING] {name} gagal")
-            except Exception as e:
-                print(f"[WARNING] {name} error: {e}")
-
+all_result_files = []
+with ThreadPoolExecutor(max_workers=5) as executor:
+    futures = {
+        executor.submit(run_katana): "katana",
+        executor.submit(run_gospider): "gospider",
+        executor.submit(run_hakrawler): "hakrawler",
+        executor.submit(run_waymore): "waymore",
+        executor.submit(run_urlfinder): "urlfinder"
+    }
+    for future in as_completed(futures):
+        name = futures[future]
+        try:
+            result = future.result()
+            if result:
+                print(f"[INFO] {name} berhasil")
+                if name == "katana" and os.path.exists(katana_file):
+                    all_result_files.append(katana_file)
+                elif name == "gospider" and os.path.exists(gospider_file):
+                    all_result_files.append(gospider_file)
+                elif name == "hakrawler" and os.path.exists(hakrawler_file):
+                    all_result_files.append(hakrawler_file)
+                elif name == "waymore" and os.path.exists(waymore_file):
+                    all_result_files.append(waymore_file)
+                elif name == "urlfinder" and os.path.exists(urlfinder_file):
+                    all_result_files.append(urlfinder_file)
+            else:
+                print(f"[WARNING] {name} gagal")
+        except Exception as e:
+            print(f"[WARNING] {name} error: {e}")
 static_extensions = (
     '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.webp', '.ico', '.tiff', '.psd',
     '.css', '.scss', '.sass', '.less',
@@ -198,7 +167,6 @@ static_extensions = (
     '.xml', '.json', '.yaml', '.yml', '.toml', '.ini', '.cfg',
     '.txt', '.md', '.log'
 )
-
 def process_files(file_list, output_file):
     if not file_list:
         return []
@@ -224,21 +192,14 @@ def process_files(file_list, output_file):
         for line in unique_lines:
             f.write(line + "\n")
     return unique_lines
-
-if active_results:
-    active_urls = process_files(active_results, active_output)
-    print(f"[INFO] Active URLs: {len(active_urls)} disimpan ke {active_output}")
-if passive_results:
-    passive_urls = process_files(passive_results, passive_output)
-    print(f"[INFO] Passive URLs: {len(passive_urls)} disimpan ke {passive_output}")
-
+if all_result_files:
+    urls = process_files(all_result_files, output_file)
+    print(f"[INFO] Total URLs: {len(urls)} disimpan ke {output_file}")
 temp_files = [katana_file, gospider_file, hakrawler_file, waymore_file, urlfinder_file]
 for f in temp_files:
     if os.path.exists(f):
         os.remove(f)
-
 if os.path.exists(gospider_dir):
     import shutil
     shutil.rmtree(gospider_dir)
-
 print(f"[INFO] Selesai")
