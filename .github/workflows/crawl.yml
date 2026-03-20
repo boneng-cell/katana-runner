@@ -1,4 +1,4 @@
-name: Katana Scan (Simple)
+name: crawl (Simple)
 
 on:
   workflow_dispatch:
@@ -30,7 +30,13 @@ jobs:
       - name: Install Katana
         run: go install github.com/projectdiscovery/katana/cmd/katana@v1.0.4
 
-      - name: Run Katana
+      - name: Install Gospider
+        run: go install github.com/jaeles-project/gospider@latest
+
+      - name: Install Hakrawler
+        run: go install github.com/hakluke/hakrawler@latest
+
+      - name: Run Tool
         env:
           TARGET: ${{ github.event.inputs.target }}
           USE_HEADERS: "false"
