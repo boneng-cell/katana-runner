@@ -1,0 +1,49 @@
+name: crawl (single - with cookie)
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Target URL atau domain"
+        required: true
+      cookie:
+        description: "Cookie"
+        required: true
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.9'
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+      - name: Install Katana
+        run: go install github.com/projectdiscovery/katana/cmd/katana@latest
+      - name: Install Gospider
+        run: go install github.com/jaeles-project/gospider@latest
+      - name: Install Hakrawler
+        run: go install github.com/hakluke/hakrawler@latest
+      - name: Install Waymore
+        run: pip install waymore
+      - name: Install Urlfinder
+        run: go install github.com/projectdiscovery/urlfinder/cmd/urlfinder@latest
+      - name: Install Httpx
+        run: go install github.com/projectdiscovery/httpx/cmd/httpx@latest
+      - name: Run Tool
+        env:
+          TARGET: ${{ github.event.inputs.target }}
+          COOKIE: ${{ github.event.inputs.cookie }}
+          USE_HEADERS: "true"
+        run: python3 crawl-runner.py
+      - name: Upload Result
+        uses: actions/upload-artifact@v4
+        with:
+          name: crawl-result-${{ github.event.inputs.target }}
+          path: "*/"
