@@ -79,9 +79,16 @@ jobs:
         echo "${{ github.event.inputs.targets_base64 }}" | base64 -d > targets.txt
     - name: Run Multi Scan
       run: python3 crawl-runner.py -l targets.txt
+    - name: Extract hostname
+      id: sanitize
+      run: |
+        TARGET="${{ github.event.inputs.target }}"
+        HOSTNAME=$(echo "$TARGET" | sed -E 's|^https?://||' | sed -E 's|/.*$||')
+        echo "sanitized=$HOSTNAME" >> $GITHUB_OUTPUT
+
     - name: Upload Result
       uses: actions/upload-artifact@v4
       with:
-        name: crawl-result-multi
+        name: crawl-result-${{ steps.sanitize.outputs.sanitized }}
         path: "*/"
         retention-days: 30
