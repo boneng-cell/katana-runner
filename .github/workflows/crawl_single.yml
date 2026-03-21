@@ -79,9 +79,16 @@ jobs:
         TARGET: ${{ github.event.inputs.target }}
         USE_HEADERS: "false"
       run: python3 crawl-runner.py
+    - name: Extract hostname
+      id: sanitize
+      run: |
+        TARGET="${{ github.event.inputs.target }}"
+        HOSTNAME=$(echo "$TARGET" | sed -E 's|^https?://||' | sed -E 's|/.*$||')
+        echo "sanitized=$HOSTNAME" >> $GITHUB_OUTPUT
+
     - name: Upload Result
       uses: actions/upload-artifact@v4
       with:
-        name: crawl-result-${{ github.event.inputs.target }}
+        name: crawl-result-${{ steps.sanitize.outputs.sanitized }}
         path: "*/"
         retention-days: 30
