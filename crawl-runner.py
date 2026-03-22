@@ -8,6 +8,11 @@ import json
 import argparse
 import time
 import base64
+def normalize_url(url):
+    url = url.strip()
+    if url.endswith('/'):
+        url = url[:-1]
+    return url
 def process_single_domain(target, cookie, use_headers):
     if not target:
         return None
@@ -190,7 +195,12 @@ def process_single_domain(target, cookie, use_headers):
                 if any(f"/{ext.lstrip('.')}/" in line_stripped.lower() for ext in static_extensions[:10]):
                     continue
                 filtered_lines.append(line_stripped)
-        return sorted(set(filtered_lines))
+        unique_urls = {}
+        for url in filtered_lines:
+            normalized = normalize_url(url)
+            if normalized not in unique_urls:
+                unique_urls[normalized] = url
+        return list(unique_urls.values())
     def run_httpx(urls, output_dir, cookie):
         if not urls:
             print(f"[INFO] [{domain}] Tidak ada URL untuk di-scan dengan httpx")
